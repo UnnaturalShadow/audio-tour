@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drag & Drop Font Activity</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: #fafafa;
+    }
+
+    h2, h3 {
+      text-align: center;
+    }
+
+    audio {
+      width: 100%;
+    }
+
+    /* CATEGORY DROP ZONES */
+    .category {
+      padding: 15px;
+      margin: 10px 0;
+      border: 2px dashed #aaa;
+      border-radius: 10px;
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      background: #fff;
+      gap: 5px;
+    }
+
+    .category h4 {
+      margin: 0 0 5px 0;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* FONT LIST / DRAGGABLE ITEMS */
+    #fontList {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      padding: 10px 0;
+    }
+
+    .fontItem {
+      padding: 10px 15px;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: #fff;
+      cursor: grab;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 80px;
+      text-align: center;
+      user-select: none;
+      font-size: 18px;
+    }
+
+    .dragOver {
+      border-color: #007bff;
+      background: #e0f0ff;
+    }
+
+    button {
+      padding: 14px 18px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: none;
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:active {
+      background: #0056c3;
+    }
+
+    /* MOBILE-FRIENDLY SCROLLING */
+    #fontList::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    #fontList::-webkit-scrollbar-thumb {
+      background: #aaa;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Drag & Drop Font Activity</h2>
+
+  <audio id="audio" controls>
+    <source src="../audios/test.wav" type="audio/mpeg" />
+  </audio>
+
+  <button id="startActivity">Start Font Activity</button>
+
+  <div id="instructions" style="display:none; text-align:center;">
+    <p>Drag the font styles you like into the category that best represents that type of love.</p>
+  </div>
+
+  <!-- FONT LIST -->
+  <div id="fontList" style="display:none;">
+    <div class="fontItem" draggable="true" style="font-family: 'Georgia', serif;">love</div>
+    <div class="fontItem" draggable="true" style="font-family: 'Courier New', monospace;">love</div>
+    <div class="fontItem" draggable="true" style="font-family: 'Times New Roman', serif;">love</div>
+    <div class="fontItem" draggable="true" style="font-family: 'Verdana', sans-serif;">love</div>
+    <div class="fontItem" draggable="true" style="font-family: 'Impact', sans-serif;">love</div>
+    <div class="fontItem" draggable="true" style="font-family: 'Comic Sans MS', cursive, sans-serif;">love</div>
+    <div class="fontItem" draggable="true" style="font-family: 'Lucida Handwriting', cursive;">love</div>
+    <div class="fontItem" draggable="true" style="font-family: 'Brush Script MT', cursive;">love</div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div id="categories" style="display:none;">
+    <div class="category" data-category="romantic">
+      <h4>Romantic Love</h4>
+    </div>
+    <div class="category" data-category="family">
+      <h4>Family Love</h4>
+    </div>
+    <div class="category" data-category="friendship">
+      <h4>Friendship</h4>
+    </div>
+    <div class="category" data-category="tough">
+      <h4>Tough Love</h4>
+    </div>
+    <div class="category" data-category="kindness">
+      <h4>Kindness / Compassion</h4>
+    </div>
+  </div>
+
+  <!-- SUBMIT BUTTON -->
+  <button id="submitFonts" style="display:none;">Submit & Continue Audio</button>
+
+  <script>
+    const audio = document.getElementById("audio");
+    const startBtn = document.getElementById("startActivity");
+    const fontList = document.getElementById("fontList");
+    const categories = document.getElementById("categories");
+    const instructions = document.getElementById("instructions");
+    const submitBtn = document.getElementById("submitFonts");
+
+    const FONT_TRIGGER_TIME = 10; // auto-pause audio at 10s
+
+    let activityStarted = false;
+
+    startBtn.addEventListener("click", startFontActivity);
+
+    function startFontActivity() {
+      activityStarted = true;
+      audio.pause();
+      fontList.style.display = "flex";
+      categories.style.display = "flex";
+      categories.style.flexDirection = "column";
+      instructions.style.display = "block";
+      submitBtn.style.display = "block";
+    }
+
+    // Optional: auto-trigger at specific audio time
+    audio.addEventListener("timeupdate", () => {
+      if (!activityStarted && audio.currentTime >= FONT_TRIGGER_TIME) {
+        startFontActivity();
+      }
+    });
+
+    // DRAG & DROP LOGIC
+    let draggedItem = null;
+
+    document.querySelectorAll('.fontItem').forEach(item => {
+      item.addEventListener('dragstart', e => {
+        draggedItem = item;
+        e.dataTransfer.setData('text/plain', '');
+      });
+    });
+
+    document.querySelectorAll('.category').forEach(cat => {
+      cat.addEventListener('dragover', e => {
+        e.preventDefault();
+        cat.classList.add('dragOver');
+      });
+
+      cat.addEventListener('dragleave', e => {
+        cat.classList.remove('dragOver');
+      });
+
+      cat.addEventListener('drop', e => {
+        e.preventDefault();
+        cat.classList.remove('dragOver');
+        if (draggedItem) {
+          cat.appendChild(draggedItem);
+          draggedItem = null;
+        }
+      });
+    });
+
+    // SUBMIT BUTTON LOGIC
+    submitBtn.addEventListener("click", () => {
+      // Disable dragging
+      document.querySelectorAll('.fontItem').forEach(item => {
+        item.setAttribute('draggable', 'false');
+      });
+
+      // Hide submit button
+      submitBtn.style.display = "none";
+
+      // Resume audio
+      audio.play();
+    });
+
+  </script>
+</body>
+</html>
