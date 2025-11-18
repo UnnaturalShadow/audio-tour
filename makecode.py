@@ -1,3 +1,5 @@
+#simple python template to generate a qrcode for a given url.
+
 import qrcode
 
 # Data to encode in the QR code
