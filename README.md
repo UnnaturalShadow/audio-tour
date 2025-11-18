@@ -4,7 +4,7 @@ This project is designed to allow visiters to the Brigham Young University Museu
 
 The content of this project was written and developed by Paige Griffiths. The web-pages were developed by Joshua Decker and the MOA design department.
 
-The web element is currently hosted on githubu pages, but will soon be pushed to the MOA website.
+The web element is currently hosted on github pages, but will soon be pushed to the MOA website.
 
 **©2025 Brigham Young University Museum of Art. All Rights Reserved.**
 
