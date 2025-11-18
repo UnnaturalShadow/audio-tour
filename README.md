@@ -1,4 +1,4 @@
-#Self Guided Audio Tour Webpages#
+**Self Guided Audio Tour Webpages**
 
 This project is designed to allow visiters to the Brigham Young University Museum of Art to take themselves on a self guided audio tour through the use of their mobile phones. It features primarily the web-pages and audio files that provide the usesr interface and actual content of the tour, as well as several other utilities such as style references and the python code used to generate the qrcodes.
 
