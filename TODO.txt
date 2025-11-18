@@ -1,0 +1,12 @@
+Embed audio in html
+-Automatic looping vs user controlled
+Generate QR codes and link them to associated web pages
+	
+import qrcode
+
+url = "https://yourwebsite.com"
+img = qrcode.make(url)
+img.save("qrcode.png")
+
+Overall web interface
+Host on moa.byu.edu/*********?

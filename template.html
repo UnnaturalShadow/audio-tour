@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Audio Player</title>
+  <style>
+    /* Basic layout */
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 5vw;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    /* Audio player container */
+    .player {
+      display: inline-block;
+      background: #ffffff;
+      padding: 5vw;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      width: 90%;
+      max-width: 420px;
+    }
+
+    /* Sliders */
+    input[type="range"] {
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    /* Buttons */
+    .controls {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1;
+      margin: 6px;
+      padding: 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #0078D4;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      touch-action: manipulation;
+    }
+
+    button:hover,
+    button:active {
+      background-color: #005fa3;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+
+    /* Mobile fine-tuning */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.2rem;
+      }
+      button {
+        font-size: 0.9rem;
+        padding: 10px;
+      }
+      .player {
+        padding: 6vw;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Responsive Audio Player</h1>
+  <div class="player">
+    <audio id="audio" src="audio1.wav"></audio>
+
+    <!-- Progress Bar -->
+    <input type="range" id="progress" value="0" min="0" step="1">
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="back10">⏪ 10s</button>
+      <button id="playPause">Play</button>
+      <button id="forward10">10s ⏩</button>
+    </div>
+
+    <!-- Volume Control -->
+    <label for="volume">Volume:</label>
+    <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
+  </div>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const playPauseBtn = document.getElementById('playPause');
+    const progress = document.getElementById('progress');
+    const volume = document.getElementById('volume');
+    const back10 = document.getElementById('back10');
+    const forward10 = document.getElementById('forward10');
+
+    // Play / Pause
+    playPauseBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        playPauseBtn.textContent = 'Pause';
+      } else {
+        audio.pause();
+        playPauseBtn.textContent = 'Play';
+      }
+    });
+
+    // Update progress
+    audio.addEventListener('timeupdate', () => {
+      progress.max = audio.duration;
+      progress.value = audio.currentTime;
+    });
+
+    // Scrub
+    progress.addEventListener('input', () => {
+      audio.currentTime = progress.value;
+    });
+
+    // Volume
+    volume.addEventListener('input', () => {
+      audio.volume = volume.value;
+    });
+
+    // Skip backward 10 seconds
+    back10.addEventListener('click', () => {
+      audio.currentTime = Math.max(0, audio.currentTime - 10);
+    });
+
+    // Skip forward 10 seconds
+    forward10.addEventListener('click', () => {
+      audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+    });
+
+    // Reset when finished
+    audio.addEventListener('ended', () => {
+      playPauseBtn.textContent = 'Play';
+      progress.value = 0;
+    });
+  </script>
+
+</body>
+</html>

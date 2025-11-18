@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audio + Camera Capture</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    #previewContainer {
+      display: flex;
+      gap: 10px;
+    }
+    #previewContainer img {
+      width: 30%;
+      border: 2px solid #333;
+      object-fit: cover;
+    }
+    #cameraSection {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    video {
+      width: 100%;
+      max-width: 300px;
+      border: 2px solid #444;
+    }
+  </style>
+</head>
+<body>
+  <h2>Audio + Camera Capture Demo</h2>
+
+  <audio id="audio" controls>
+    <source src="test.wav" type="audio/mpeg" />
+  </audio>
+
+  <button id="startSequence">Start Photo Sequence</button>
+
+  <div id="cameraSection">
+    <video id="video" autoplay playsinline></video>
+    <button id="takePhoto">Take Photo</button>
+  </div>
+
+  <h3>Captured Photos:</h3>
+  <div id="previewContainer"></div>
+
+  <script>
+  const audio = document.getElementById("audio");
+  const startBtn = document.getElementById("startSequence");
+  const video = document.getElementById("video");
+  const cameraSection = document.getElementById("cameraSection");
+  const takePhotoBtn = document.getElementById("takePhoto");
+  const previewContainer = document.getElementById("previewContainer");
+
+  let stream = null;
+  let photoCount = 0;
+  let photos = [];
+
+  const TRIGGER_TIME = 12.5;   // ⬅️ CHANGE THIS to whatever timestamp you want
+  let sequenceStarted = false; // prevents repeated triggering
+
+  async function startCamera() {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+
+    return new Promise(resolve => {
+      video.onloadedmetadata = () => resolve();
+    });
+  }
+
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+  }
+
+  function savePhoto() {
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+
+    if (w === 0 || h === 0) {
+      console.warn("Video not ready; skipping capture.");
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, w, h);
+
+    const dataURL = canvas.toDataURL("image/png");
+    photos.push(dataURL);
+
+    const img = document.createElement("img");
+    img.src = dataURL;
+    previewContainer.appendChild(img);
+  }
+
+  // 🚀 Start photo sequence manually OR automatically
+  async function startPhotoSequence() {
+    photos = [];
+    previewContainer.innerHTML = "";
+    photoCount = 0;
+
+    audio.pause();  // Pause audio at the exact current time
+
+    await startCamera();
+    cameraSection.style.display = "flex";
+  }
+
+  // Manual button option
+  startBtn.addEventListener("click", startPhotoSequence);
+
+  // Automatic audio trigger
+  audio.addEventListener("timeupdate", () => {
+    if (!sequenceStarted && audio.currentTime >= TRIGGER_TIME) {
+      sequenceStarted = true;
+      startPhotoSequence();
+    }
+  });
+
+  takePhotoBtn.addEventListener("click", () => {
+    savePhoto();
+    photoCount++;
+
+    if (photoCount >= 3) {
+      stopCamera();
+      cameraSection.style.display = "none";
+
+      // Resume audio playback exactly where it left off
+      audio.play();
+    }
+  });
+</script>
+
+</body>
+</html>
