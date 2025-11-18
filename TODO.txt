@@ -1,12 +1,5 @@
-Embed audio in html
--Automatic looping vs user controlled
-Generate QR codes and link them to associated web pages
-	
-import qrcode
-
-url = "https://yourwebsite.com"
-img = qrcode.make(url)
-img.save("qrcode.png")
+Love page would be best with images of fonts instead of text to streamline drag and drop.
+Should still work with existing drag and drop framework. 
 
 Overall web interface
 Host on moa.byu.edu/*********?
