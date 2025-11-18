@@ -3,68 +3,119 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Audio + Camera + Text Capture</title>
+  <title>Untitled by Dan Steinhilber</title>
 
   <style>
+    * { box-sizing: border-box; }
+
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 20px;
+      background: #fafafa;
     }
 
-    #previewContainer {
-      display: flex;
-      gap: 10px;
+    h2, h3 {
+      text-align: center;
     }
 
-    #previewContainer img {
-      width: 30%;
-      border: 2px solid #333;
-      object-fit: cover;
+    audio {
+      width: 100%;
     }
 
-    /* Camera section */
+    /* MOBILE-FRIENDLY BUTTONS */
+    button {
+      padding: 14px 18px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: none;
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:active {
+      background: #0056c3;
+    }
+
+    /* CAMERA SECTION */
     #cameraSection {
       display: none;
       flex-direction: column;
       gap: 10px;
+      align-items: center;
     }
 
     video {
       width: 100%;
-      max-width: 300px;
-      border: 2px solid #444;
+      max-width: 350px;
+      border: 3px solid #333;
+      border-radius: 10px;
     }
 
-    /* Text prompt styling */
+    /* PHOTOS GRID */
+    #previewContainer {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #previewContainer img {
+      width: 30%;
+      min-width: 100px;
+      border: 2px solid #333;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    /* TEXT PROMPT CARD */
     .textPrompt {
       display: none;
       flex-direction: column;
-      gap: 10px;
-      padding: 15px;
-      border: 2px solid #444;
-      background: #f0f0f0;
+      gap: 12px;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      border: 2px solid #ddd;
       max-width: 400px;
+      width: 100%;
+      margin: 0 auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     input[type="text"] {
-      padding: 8px;
-      font-size: 16px;
+      padding: 12px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: 2px solid #aaa;
       width: 100%;
     }
 
-    button {
-      padding: 10px 15px;
-      font-size: 16px;
-      cursor: pointer;
+    /* USER RESPONSE CARD */
+    .responseCard {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 5px solid #007bff;
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .responseCard h4 {
+      margin-top: 0;
     }
   </style>
 </head>
 
 <body>
-  <h2>Audio + Camera + Text Capture Demo</h2>
+  <h2>Untitled by Dan Steinhilber</h2>
 
   <audio id="audio" controls>
     <source src="test.wav" type="audio/mpeg" />
@@ -78,21 +129,25 @@
     <button id="takePhoto">Take Photo</button>
   </div>
 
-  <h3>Captured Photos:</h3>
+  <h3>Your Photos:</h3>
   <div id="previewContainer"></div>
 
   <!-- TEXT PROMPTS -->
   <div id="textPrompt1" class="textPrompt">
     <h3>Question 1</h3>
-    <input id="textInput1" type="text" placeholder="Enter your response..." />
+    <input id="textInput1" type="text" placeholder="If you were to give this piece a title right now, what would you call it?" />
     <button id="submitText1">Submit</button>
   </div>
 
   <div id="textPrompt2" class="textPrompt">
     <h3>Question 2</h3>
-    <input id="textInput2" type="text" placeholder="Enter your response..." />
+    <input id="textInput2" type="text" placeholder="If you could choose one ordinary object from your life to turn into art, what would it be?
+" />
     <button id="submitText2">Submit</button>
   </div>
+
+  <h3>Your Responses:</h3>
+  <div id="responseContainer"></div>
 
   <script>
     const audio = document.getElementById("audio");
@@ -101,22 +156,19 @@
     const cameraSection = document.getElementById("cameraSection");
     const takePhotoBtn = document.getElementById("takePhoto");
     const previewContainer = document.getElementById("previewContainer");
+    const responseContainer = document.getElementById("responseContainer");
 
     const textPrompt1 = document.getElementById("textPrompt1");
     const textPrompt2 = document.getElementById("textPrompt2");
-    const submitText1 = document.getElementById("submitText1");
-    const submitText2 = document.getElementById("submitText2");
 
     let stream = null;
     let photoCount = 0;
     let photos = [];
 
-    /* === TRIGGER TIMES (change as needed) === */
-    const PHOTO_TRIGGER = 12.5;     // When to take photos automatically
-    const TEXT_TRIGGER_1 = 25.0;    // First question
-    const TEXT_TRIGGER_2 = 40.0;    // Second question
+    const PHOTO_TRIGGER = 12.5;
+    const TEXT_TRIGGER_1 = 25.0;
+    const TEXT_TRIGGER_2 = 40.0;
 
-    /* Prevent multiple triggers */
     let photoTriggered = false;
     let text1Triggered = false;
     let text2Triggered = false;
@@ -164,13 +216,11 @@
       previewContainer.innerHTML = "";
       photoCount = 0;
 
-      audio.pause(); // pause at exact time
+      audio.pause();
 
       await startCamera();
       cameraSection.style.display = "flex";
     }
-
-    startBtn.addEventListener("click", startPhotoSequence);
 
     takePhotoBtn.addEventListener("click", () => {
       savePhoto();
@@ -179,11 +229,10 @@
       if (photoCount >= 3) {
         stopCamera();
         cameraSection.style.display = "none";
-        audio.play(); // resume
+        audio.play();
       }
     });
 
-    /* === TEXT PROMPT HELPERS === */
     function showTextPrompt(element) {
       audio.pause();
       element.style.display = "flex";
@@ -194,38 +243,45 @@
       audio.play();
     }
 
-    /* Submit handlers */
-    submitText1.addEventListener("click", () => {
-      console.log("Response 1:", document.getElementById("textInput1").value);
+    function addResponseCard(questionLabel, text) {
+      const card = document.createElement("div");
+      card.className = "responseCard";
+      card.innerHTML = `
+        <h4>${questionLabel}</h4>
+        <p>${text}</p>
+      `;
+      responseContainer.appendChild(card);
+    }
+
+    document.getElementById("submitText1").addEventListener("click", () => {
+      const text = document.getElementById("textInput1").value;
       hideTextPrompt(textPrompt1);
+      addResponseCard("Your title for the sculpture:", text);
     });
 
-    submitText2.addEventListener("click", () => {
-      console.log("Response 2:", document.getElementById("textInput2").value);
+    document.getElementById("submitText2").addEventListener("click", () => {
+      const text = document.getElementById("textInput2").value;
       hideTextPrompt(textPrompt2);
+      addResponseCard("You would make a sculpture out of:", text);
     });
 
-    /* === AUDIO TRIGGER LOGIC === */
     audio.addEventListener("timeupdate", () => {
-
-      // PHOTO TRIGGER
       if (!photoTriggered && audio.currentTime >= PHOTO_TRIGGER) {
         photoTriggered = true;
         startPhotoSequence();
       }
 
-      // TEXT PROMPT 1
       if (!text1Triggered && audio.currentTime >= TEXT_TRIGGER_1) {
         text1Triggered = true;
         showTextPrompt(textPrompt1);
       }
 
-      // TEXT PROMPT 2
       if (!text2Triggered && audio.currentTime >= TEXT_TRIGGER_2) {
         text2Triggered = true;
         showTextPrompt(textPrompt2);
       }
     });
+
   </script>
 </body>
 </html>
