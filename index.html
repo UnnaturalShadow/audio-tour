@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Audio + Camera Capture</title>
+  <title>Audio + Camera + Text Capture</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,36 +13,66 @@
       flex-direction: column;
       gap: 20px;
     }
+
     #previewContainer {
       display: flex;
       gap: 10px;
     }
+
     #previewContainer img {
       width: 30%;
       border: 2px solid #333;
       object-fit: cover;
     }
+
+    /* Camera section */
     #cameraSection {
       display: none;
       flex-direction: column;
       gap: 10px;
     }
+
     video {
       width: 100%;
       max-width: 300px;
       border: 2px solid #444;
     }
+
+    /* Text prompt styling */
+    .textPrompt {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      padding: 15px;
+      border: 2px solid #444;
+      background: #f0f0f0;
+      max-width: 400px;
+    }
+
+    input[type="text"] {
+      padding: 8px;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
-  <h2>Audio + Camera Capture Demo</h2>
+  <h2>Audio + Camera + Text Capture Demo</h2>
 
   <audio id="audio" controls>
     <source src="test.wav" type="audio/mpeg" />
   </audio>
 
-  <button id="startSequence">Start Photo Sequence</button>
+  <button id="startSequence">Start Photo Sequence Manually</button>
 
+  <!-- CAMERA SECTION -->
   <div id="cameraSection">
     <video id="video" autoplay playsinline></video>
     <button id="takePhoto">Take Photo</button>
@@ -50,97 +81,151 @@
   <h3>Captured Photos:</h3>
   <div id="previewContainer"></div>
 
+  <!-- TEXT PROMPTS -->
+  <div id="textPrompt1" class="textPrompt">
+    <h3>Question 1</h3>
+    <input id="textInput1" type="text" placeholder="Enter your response..." />
+    <button id="submitText1">Submit</button>
+  </div>
+
+  <div id="textPrompt2" class="textPrompt">
+    <h3>Question 2</h3>
+    <input id="textInput2" type="text" placeholder="Enter your response..." />
+    <button id="submitText2">Submit</button>
+  </div>
+
   <script>
-  const audio = document.getElementById("audio");
-  const startBtn = document.getElementById("startSequence");
-  const video = document.getElementById("video");
-  const cameraSection = document.getElementById("cameraSection");
-  const takePhotoBtn = document.getElementById("takePhoto");
-  const previewContainer = document.getElementById("previewContainer");
+    const audio = document.getElementById("audio");
+    const startBtn = document.getElementById("startSequence");
+    const video = document.getElementById("video");
+    const cameraSection = document.getElementById("cameraSection");
+    const takePhotoBtn = document.getElementById("takePhoto");
+    const previewContainer = document.getElementById("previewContainer");
 
-  let stream = null;
-  let photoCount = 0;
-  let photos = [];
+    const textPrompt1 = document.getElementById("textPrompt1");
+    const textPrompt2 = document.getElementById("textPrompt2");
+    const submitText1 = document.getElementById("submitText1");
+    const submitText2 = document.getElementById("submitText2");
 
-  const TRIGGER_TIME = 12.5;   // ⬅️ CHANGE THIS to whatever timestamp you want
-  let sequenceStarted = false; // prevents repeated triggering
+    let stream = null;
+    let photoCount = 0;
+    let photos = [];
 
-  async function startCamera() {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
+    /* === TRIGGER TIMES (change as needed) === */
+    const PHOTO_TRIGGER = 12.5;     // When to take photos automatically
+    const TEXT_TRIGGER_1 = 25.0;    // First question
+    const TEXT_TRIGGER_2 = 40.0;    // Second question
 
-    return new Promise(resolve => {
-      video.onloadedmetadata = () => resolve();
+    /* Prevent multiple triggers */
+    let photoTriggered = false;
+    let text1Triggered = false;
+    let text2Triggered = false;
+
+    async function startCamera() {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+
+      return new Promise(resolve => {
+        video.onloadedmetadata = () => resolve();
+      });
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      video.srcObject = null;
+    }
+
+    function savePhoto() {
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+
+      if (w === 0 || h === 0) return;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, w, h);
+
+      const dataURL = canvas.toDataURL("image/png");
+      photos.push(dataURL);
+
+      const img = document.createElement("img");
+      img.src = dataURL;
+      previewContainer.appendChild(img);
+    }
+
+    async function startPhotoSequence() {
+      photos = [];
+      previewContainer.innerHTML = "";
+      photoCount = 0;
+
+      audio.pause(); // pause at exact time
+
+      await startCamera();
+      cameraSection.style.display = "flex";
+    }
+
+    startBtn.addEventListener("click", startPhotoSequence);
+
+    takePhotoBtn.addEventListener("click", () => {
+      savePhoto();
+      photoCount++;
+
+      if (photoCount >= 3) {
+        stopCamera();
+        cameraSection.style.display = "none";
+        audio.play(); // resume
+      }
     });
-  }
 
-  function stopCamera() {
-    if (stream) {
-      stream.getTracks().forEach(t => t.stop());
-      stream = null;
-    }
-    video.srcObject = null;
-  }
-
-  function savePhoto() {
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-
-    if (w === 0 || h === 0) {
-      console.warn("Video not ready; skipping capture.");
-      return;
+    /* === TEXT PROMPT HELPERS === */
+    function showTextPrompt(element) {
+      audio.pause();
+      element.style.display = "flex";
     }
 
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, w, h);
-
-    const dataURL = canvas.toDataURL("image/png");
-    photos.push(dataURL);
-
-    const img = document.createElement("img");
-    img.src = dataURL;
-    previewContainer.appendChild(img);
-  }
-
-  // 🚀 Start photo sequence manually OR automatically
-  async function startPhotoSequence() {
-    photos = [];
-    previewContainer.innerHTML = "";
-    photoCount = 0;
-
-    audio.pause();  // Pause audio at the exact current time
-
-    await startCamera();
-    cameraSection.style.display = "flex";
-  }
-
-  // Manual button option
-  startBtn.addEventListener("click", startPhotoSequence);
-
-  // Automatic audio trigger
-  audio.addEventListener("timeupdate", () => {
-    if (!sequenceStarted && audio.currentTime >= TRIGGER_TIME) {
-      sequenceStarted = true;
-      startPhotoSequence();
-    }
-  });
-
-  takePhotoBtn.addEventListener("click", () => {
-    savePhoto();
-    photoCount++;
-
-    if (photoCount >= 3) {
-      stopCamera();
-      cameraSection.style.display = "none";
-
-      // Resume audio playback exactly where it left off
+    function hideTextPrompt(element) {
+      element.style.display = "none";
       audio.play();
     }
-  });
-</script>
 
+    /* Submit handlers */
+    submitText1.addEventListener("click", () => {
+      console.log("Response 1:", document.getElementById("textInput1").value);
+      hideTextPrompt(textPrompt1);
+    });
+
+    submitText2.addEventListener("click", () => {
+      console.log("Response 2:", document.getElementById("textInput2").value);
+      hideTextPrompt(textPrompt2);
+    });
+
+    /* === AUDIO TRIGGER LOGIC === */
+    audio.addEventListener("timeupdate", () => {
+
+      // PHOTO TRIGGER
+      if (!photoTriggered && audio.currentTime >= PHOTO_TRIGGER) {
+        photoTriggered = true;
+        startPhotoSequence();
+      }
+
+      // TEXT PROMPT 1
+      if (!text1Triggered && audio.currentTime >= TEXT_TRIGGER_1) {
+        text1Triggered = true;
+        showTextPrompt(textPrompt1);
+      }
+
+      // TEXT PROMPT 2
+      if (!text2Triggered && audio.currentTime >= TEXT_TRIGGER_2) {
+        text2Triggered = true;
+        showTextPrompt(textPrompt2);
+      }
+    });
+  </script>
 </body>
 </html>
