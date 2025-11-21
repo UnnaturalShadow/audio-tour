@@ -3,3 +3,13 @@ Should still work with existing drag and drop framework.
 
 Overall web interface
 Host on moa.byu.edu/*********?
+
+
+ACTIVITIES TO MAKE:
+
+Desert Grandeur color pallete selection
+Fallen Monarchs write a haiku
+In the Beginning frame voting, shot voting, and score display
+Forgotten Man thought bubbles
+Trifloria iSpy, with list of things and images of them.
+Blanket Stories user input
