@@ -37,7 +37,7 @@
   <h2>Audio + Color Palette Activity</h2>
 
   <audio id="audio" controls>
-    <source src="audios/test.wav" type="audio/wav" />
+    <source src="your-audio-file.mp3" type="audio/mpeg" />
   </audio>
 
   <button id="startSequence">Start Palette Activity</button>
@@ -45,6 +45,7 @@
   <div id="colorPickerSection">
     <label for="colorPicker">Choose a color:</label>
     <input type="color" id="colorPicker" />
+    <button id="confirmColor">Confirm Color</button>
   </div>
 
   <h3>Your Color Palette:</h3>
@@ -61,33 +62,41 @@
     const startBtn = document.getElementById("startSequence");
     const colorSection = document.getElementById("colorPickerSection");
     const colorPicker = document.getElementById("colorPicker");
+    const confirmBtn = document.getElementById("confirmColor");
     const circles = document.querySelectorAll(".colorCircle");
 
     let colorIndex = 0;
+    let autoStopTime = 5; // seconds
 
+    // Auto-stop at 5 seconds
+    audio.addEventListener("timeupdate", () => {
+      if (audio.currentTime >= autoStopTime) {
+        audio.pause();
+        colorSection.style.display = "flex";
+      }
+    });
+
+    // Start button resets everything
     startBtn.addEventListener("click", () => {
-      // Reset
       colorIndex = 0;
       circles.forEach(c => c.style.backgroundColor = "white");
 
-      // Pause audio
-      audio.pause();
-      audio.currentTime = 0; // or leave as-is
+      audio.currentTime = 0;
+      audio.play();
 
-      // Show color picker
-      colorSection.style.display = "flex";
+      colorSection.style.display = "none";
     });
 
-    colorPicker.addEventListener("input", () => {
+    // Confirm selected color
+    confirmBtn.addEventListener("click", () => {
       if (colorIndex < 5) {
         circles[colorIndex].style.backgroundColor = colorPicker.value;
         colorIndex++;
       }
 
       if (colorIndex >= 5) {
-        // Hide picker and resume audio
         colorSection.style.display = "none";
-        audio.play();
+        audio.play(); // resume audio
       }
     });
   </script>
