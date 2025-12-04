@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audio + Color Palette Activity</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #paletteContainer {
+      display: flex;
+      gap: 15px;
+    }
+
+    .colorCircle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 3px solid #333;
+      background-color: white;
+    }
+
+    #colorPickerSection {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Audio + Color Palette Activity</h2>
+
+  <audio id="audio" controls>
+    <source src="audios/test.wav" type="audio/wav" />
+  </audio>
+
+  <button id="startSequence">Start Palette Activity</button>
+
+  <div id="colorPickerSection">
+    <label for="colorPicker">Choose a color:</label>
+    <input type="color" id="colorPicker" />
+  </div>
+
+  <h3>Your Color Palette:</h3>
+  <div id="paletteContainer">
+    <div class="colorCircle"></div>
+    <div class="colorCircle"></div>
+    <div class="colorCircle"></div>
+    <div class="colorCircle"></div>
+    <div class="colorCircle"></div>
+  </div>
+
+  <script>
+    const audio = document.getElementById("audio");
+    const startBtn = document.getElementById("startSequence");
+    const colorSection = document.getElementById("colorPickerSection");
+    const colorPicker = document.getElementById("colorPicker");
+    const circles = document.querySelectorAll(".colorCircle");
+
+    let colorIndex = 0;
+
+    startBtn.addEventListener("click", () => {
+      // Reset
+      colorIndex = 0;
+      circles.forEach(c => c.style.backgroundColor = "white");
+
+      // Pause audio
+      audio.pause();
+      audio.currentTime = 0; // or leave as-is
+
+      // Show color picker
+      colorSection.style.display = "flex";
+    });
+
+    colorPicker.addEventListener("input", () => {
+      if (colorIndex < 5) {
+        circles[colorIndex].style.backgroundColor = colorPicker.value;
+        colorIndex++;
+      }
+
+      if (colorIndex >= 5) {
+        // Hide picker and resume audio
+        colorSection.style.display = "none";
+        audio.play();
+      }
+    });
+  </script>
+</body>
+</html>
